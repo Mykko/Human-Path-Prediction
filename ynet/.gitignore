@@ -1,0 +1,7 @@
+segmentation_models
+pretrained_models
+data/inD_semantic_maps
+data/inD
+config/inD_longterm.yaml
+data/
+__pycache__/
