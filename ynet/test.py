@@ -30,7 +30,7 @@ def torch_multivariate_gaussian_heatmap(coordinates, H, W, dist, sigma_factor, r
 	return kernel / kernel.sum()
 
 
-def evaluate(model, val_loader, val_images, num_goals, num_traj, obs_len, batch_size, device, input_template, waypoints, resize, temperature, use_TTST=False, use_CWS=False, rel_thresh=0.002, CWS_params=None, dataset_name=None, homo_mat=None, mode='val'):
+def evaluate(model, val_loader, val_images, num_goals, num_traj, obs_len, batch_size, device, input_template, waypoints, resize, temperature, use_GT_GOAL = True, use_TTST=False, use_CWS=False, rel_thresh=0.002, CWS_params=None, dataset_name=None, homo_mat=None, mode='val'):
 	"""
 
 	:param model: torch model
@@ -97,7 +97,10 @@ def evaluate(model, val_loader, val_images, num_goals, num_traj, obs_len, batch_
 				pred_waypoint_map_sigmoid = model.sigmoid(pred_waypoint_map_sigmoid)
 
 				################################################ TTST ##################################################
-				if use_TTST:
+				if use_GT_GOAL:
+					num_goals = 1
+					goal_samples = gt_future[:, -1:].unsqueeze(0)
+				elif use_TTST:
 					# TTST Begin
 					# sample a large amount of goals to be clustered
 					goal_samples = sampling(pred_waypoint_map_sigmoid[:, -1:], num_samples=10000, replacement=True, rel_threshold=rel_thresh)

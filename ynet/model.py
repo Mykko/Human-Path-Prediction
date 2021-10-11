@@ -332,7 +332,7 @@ class YNet:
 
 			if val_ADE < best_test_ADE:
 				print(f'Best Epoch {e}: \nVal ADE: {val_ADE} \nVal FDE: {val_FDE}')
-				torch.save(model.state_dict(), 'pretrained_models/' + experiment_name + '_weights.pt')
+				torch.save(model.state_dict(), 'pretrained_models/train_2021_10_11/' + experiment_name + '_weights.pt')
 				best_test_ADE = val_ADE
 
 	def evaluate(self, data, params, image_path, batch_size=8, num_goals=20, num_traj=1, rounds=1, device=None, dataset_name=None):
