@@ -249,6 +249,8 @@ class YNet:
 			image_file_name = 'reference.png'
 		elif dataset_name == 'eth':
 			image_file_name = 'oracle.png'
+		elif dataset_name == 'atc':
+			image_file_name = 'ATC_Scence.png'
 		else:
 			raise ValueError(f'{dataset_name} dataset is not supported')
 
@@ -276,14 +278,21 @@ class YNet:
 		val_dataset = SceneDataset(val_data, resize=params['resize'], total_len=total_len)
 		val_loader = DataLoader(val_dataset, batch_size=1, collate_fn=scene_collate)
 
-		# Preprocess images, in particular resize, pad and normalize as semantic segmentation backbone requires
-		resize(train_images, factor=params['resize'], seg_mask=seg_mask)
-		pad(train_images, division_factor=self.division_factor)  # make sure that image shape is divisible by 32, for UNet segmentation
-		preprocess_image_for_segmentation(train_images, seg_mask=seg_mask)
+		if dataset_name == 'atc':
+			resize(train_images, factor=params['resize'], seg_mask=seg_mask)
+			pad(train_images, division_factor=self.division_factor)
+			resize(val_images, factor=params['resize'], seg_mask=seg_mask)
+			pad(val_images, division_factor=self.division_factor)
+		
+		else:
+			# Preprocess images, in particular resize, pad and normalize as semantic segmentation backbone requires
+			resize(train_images, factor=params['resize'], seg_mask=seg_mask)
+			pad(train_images, division_factor=self.division_factor)  # make sure that image shape is divisible by 32, for UNet segmentation
+			preprocess_image_for_segmentation(train_images, seg_mask=seg_mask)
 
-		resize(val_images, factor=params['resize'], seg_mask=seg_mask)
-		pad(val_images, division_factor=self.division_factor)  # make sure that image shape is divisible by 32, for UNet segmentation
-		preprocess_image_for_segmentation(val_images, seg_mask=seg_mask)
+			resize(val_images, factor=params['resize'], seg_mask=seg_mask)
+			pad(val_images, division_factor=self.division_factor)  # make sure that image shape is divisible by 32, for UNet segmentation
+			preprocess_image_for_segmentation(val_images, seg_mask=seg_mask)
 
 		model = self.model.to(device)
 
@@ -364,6 +373,8 @@ class YNet:
 			image_file_name = 'reference.png'
 		elif dataset_name == 'eth':
 			image_file_name = 'oracle.png'
+		elif dataset_name == 'atc':
+			image_file_name = 'ATC_Scence.png'
 		else:
 			raise ValueError(f'{dataset_name} dataset is not supported')
 
@@ -382,10 +393,16 @@ class YNet:
 		test_dataset = SceneDataset(data, resize=params['resize'], total_len=total_len)
 		test_loader = DataLoader(test_dataset, batch_size=1, collate_fn=scene_collate)
 
+
+		if dataset_name == 'atc':
+			resize(test_images, factor=params['resize'], seg_mask=seg_mask)
+			pad(test_images, division_factor=self.division_factor)
+		
+		else:
 		# Preprocess images, in particular resize, pad and normalize as semantic segmentation backbone requires
-		resize(test_images, factor=params['resize'], seg_mask=seg_mask)
-		pad(test_images, division_factor=self.division_factor)  # make sure that image shape is divisible by 32, for UNet architecture
-		preprocess_image_for_segmentation(test_images, seg_mask=seg_mask)
+			resize(test_images, factor=params['resize'], seg_mask=seg_mask)
+			pad(test_images, division_factor=self.division_factor)  # make sure that image shape is divisible by 32, for UNet architecture
+			preprocess_image_for_segmentation(test_images, seg_mask=seg_mask)
 
 		model = self.model.to(device)
 

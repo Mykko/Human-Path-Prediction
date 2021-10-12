@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from utils.image_utils import get_patch, image2world
+import torchvision.transforms as transforms
 
 
 def train(model, train_loader, train_images, e, obs_len, pred_len, batch_size, params, gt_template, device, input_template, optimizer, criterion, dataset_name, homo_mat):
@@ -20,6 +21,10 @@ def train(model, train_loader, train_images, e, obs_len, pred_len, batch_size, p
 	train_FDE = []
 	model.train()
 	counter = 0
+
+	transform1 = transforms.Compose([
+    	transforms.ToTensor(), # range [0, 255] -> [0.0,1.0]
+    	])
 	# outer loop, for loop over each scene as scenes have different image size and to calculate segmentation only once
 	for batch, (trajectory, meta, scene) in enumerate(train_loader):
 		# Stop training after 25 batches to increase evaluation frequency
@@ -38,15 +43,29 @@ def train(model, train_loader, train_images, e, obs_len, pred_len, batch_size, p
 		# Get scene image and apply semantic segmentation
 		if e < params['unfreeze']:  # before unfreeze only need to do semantic segmentation once
 			model.eval()
-			scene_image = train_images[scene].to(device).unsqueeze(0)
-			scene_image = model.segmentation(scene_image)
+			if dataset_name == 'atc':
+				temp = transform1(train_images[scene])
+				scene_image = torch.zeros((1,2,temp.shape[1],temp.shape[2]))
+				scene_image[0][0] = temp[0]
+				scene_image[0][1] = 1 - temp[0]
+				scene_image.to(device)
+			else:
+				scene_image = train_images[scene].to(device).unsqueeze(0)
+				scene_image = model.segmentation(scene_image)
 			model.train()
 
 		# inner loop, for each trajectory in the scene
 		for i in range(0, len(trajectory), batch_size):
 			if e >= params['unfreeze']:
-				scene_image = train_images[scene].to(device).unsqueeze(0)
-				scene_image = model.segmentation(scene_image)
+				if dataset_name == 'atc':
+					temp = transform1(train_images[scene])
+					scene_image = torch.zeros((1,2,temp.shape[1],temp.shape[2]))
+					scene_image[0][0] = temp[0]
+					scene_image[0][1] = 1 - temp[0]
+					scene_image.to(device)
+				else:
+					scene_image = train_images[scene].to(device).unsqueeze(0)
+					scene_image = model.segmentation(scene_image)
 
 			# Create Heatmaps for past and ground-truth future trajectories
 			_, _, H, W = scene_image.shape  # image shape

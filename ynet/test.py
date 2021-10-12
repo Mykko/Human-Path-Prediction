@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from utils.image_utils import get_patch, sampling, image2world
 from utils.kmeans import kmeans
-
+import torchvision.transforms as transforms
 
 def torch_multivariate_gaussian_heatmap(coordinates, H, W, dist, sigma_factor, ratio, device, rot=False):
 	"""
@@ -55,6 +55,9 @@ def evaluate(model, val_loader, val_images, num_goals, num_traj, obs_len, batch_
 	:param mode: ['val', 'test']
 	:return: val_ADE, val_FDE for one epoch
 	"""
+	transform1 = transforms.Compose([
+    	transforms.ToTensor(), # range [0, 255] -> [0.0,1.0]
+    ])
 
 	model.eval()
 	val_ADE = []
@@ -64,8 +67,18 @@ def evaluate(model, val_loader, val_images, num_goals, num_traj, obs_len, batch_
 		# outer loop, for loop over each scene as scenes have different image size and to calculate segmentation only once
 		for trajectory, meta, scene in val_loader:
 			# Get scene image and apply semantic segmentation
-			scene_image = val_images[scene].to(device).unsqueeze(0)
-			scene_image = model.segmentation(scene_image)
+			if dataset_name == 'atc':
+				temp = transform1(val_images[scene])
+				scene_image = torch.zeros((1,2,temp.shape[1],temp.shape[2]))
+				scene_image[0][0] = temp[0]
+				scene_image[0][1] = 1 - temp[0]
+				scene_image.to(device)
+			else:
+				scene_image = val_images[scene].to(device).unsqueeze(0)
+				scene_image = model.segmentation(scene_image)
+
+			print(scene_image)
+			print(scene_image.max(), scene_image.min())
 
 			if dataset_name == 'eth':
 				print(counter)

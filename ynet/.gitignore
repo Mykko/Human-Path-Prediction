@@ -3,5 +3,6 @@ pretrained_models
 data/inD_semantic_maps
 data/inD
 config/inD_longterm.yaml
-data/
+data/SDD
+data/SDD_semantic_maps
 __pycache__/
